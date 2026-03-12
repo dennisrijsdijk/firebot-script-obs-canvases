@@ -7,11 +7,12 @@ interface Params {
 const script: Firebot.CustomScript<Params> = {
   getScriptManifest: () => {
     return {
-      name: "Starter Custom Script",
-      description: "A starter custom script for build",
-      author: "SomeDev",
+      name: "OBS Control (Canvases)",
+      description: "Firebot script to leverage OBS Websocket Canvas Support (OBS 32.1.0 or higher required)",
+      author: "DennisOnTheInternet",
       version: "1.0",
       firebotVersion: "5",
+      startupOnly: true
     };
   },
   getDefaultParameters: () => {
