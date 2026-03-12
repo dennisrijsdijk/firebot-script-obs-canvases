@@ -15,12 +15,14 @@
   "devDependencies": {
     "@crowbartools/firebot-custom-scripts-types": "^5.65.1",
     "@types/node": "^20.14.0",
+    "bufferutil": "^4.1.0",
     "cross-env": "^10.1.0",
     "html-loader": "^5.1.0",
     "obs-websocket-js": "^5.0.7",
     "terser-webpack-plugin": "^5.3.10",
     "ts-loader": "^9.5.1",
     "typescript": "^5.3.3",
+    "utf-8-validate": "^6.0.6",
     "webpack": "^5.89.0",
     "webpack-cli": "^5.1.4"
   },
