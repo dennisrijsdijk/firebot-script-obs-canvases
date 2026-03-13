@@ -58,7 +58,7 @@ const model: Effects.EffectType<EffectModel> = {
         $scope.getTextSources();
     },
     optionsValidator: (effect) => {
-        if (!effect.textSourceName) {
+        if (!effect.textSourceUuid) {
             return ["Please select a text source."];
         }
 
