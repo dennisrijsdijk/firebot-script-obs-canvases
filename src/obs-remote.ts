@@ -78,12 +78,16 @@ class OBSRemote {
         });
 
         if (Object.keys(this._frontendCommunicatorEvents).length === 0) {
-            this._frontendCommunicatorEvents["obsSupportsCanvases"] = ipcFrontend.on("obsSupportsCanvases", async () => {
-                return this.getObsSupportsCanvases();
+            this._frontendCommunicatorEvents["getColorSources"] = ipcFrontend.on("getColorSources", async () => {
+                return this.getAllColorSources();
             });
 
             this._frontendCommunicatorEvents["getTextSources"] = ipcFrontend.on("getTextSources", async () => {
                 return this.getAllTextSources();
+            });
+
+            this._frontendCommunicatorEvents["obsSupportsCanvases"] = ipcFrontend.on("obsSupportsCanvases", async () => {
+                return this.getObsSupportsCanvases();
             });
         }
     }
@@ -328,6 +332,28 @@ class OBSRemote {
             await this.setGDIPlusTextSourceSettings(inputUuid, settings);
         } else {
             globals.logger.warn(`Attempted to set text source settings for unsupported source kind ${sourceSettings.inputKind}`);
+        }
+    }
+
+    async getAllColorSources(): Promise<Array<OBSSource> | null> {
+        const sources = await this.getAllSources(false);
+        return sources?.filter(source => source.unversionedInputKind === "color_source") || null;
+    }
+
+    async setColorSourceSettings(inputUuid: string, settings: OBSColorSourceSettings): Promise<void> {
+        if (!this.connected) {
+            return;
+        }
+
+        try {
+            await this.obs.call("SetInputSettings", {
+                inputUuid,
+                inputSettings: {
+                    color: settings.color
+                }
+            });
+        } catch (error) {
+            globals.logger.error("Failed to set color source settings:", error);
         }
     }
 }

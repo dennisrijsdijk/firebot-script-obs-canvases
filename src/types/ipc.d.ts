@@ -3,12 +3,16 @@ type FrontendCommunicatorCommands = {
 };
 
 type BackendCommunicatorCommands = {
-    obsSupportsCanvases: {
+    getColorSources: {
         args: [];
-        returns: boolean | null;
-    };
+        returns: Array<OBSSource> | null;
+    }
     getTextSources: {
         args: [];
         returns: Array<OBSSource> | null;
+    };
+    obsSupportsCanvases: {
+        args: [];
+        returns: boolean | null;
     };
 };

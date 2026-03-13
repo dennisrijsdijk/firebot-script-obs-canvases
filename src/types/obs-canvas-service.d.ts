@@ -1,4 +1,5 @@
 type OBSCanvasService = {
-    getObsSupportsCanvases(): Promise<boolean>;
+    getColorSources(): Promise<Array<OBSSource> | null>;
     getTextSources(): Promise<Array<OBSSource> | null>;
+    getObsSupportsCanvases(): Promise<boolean>;
 }

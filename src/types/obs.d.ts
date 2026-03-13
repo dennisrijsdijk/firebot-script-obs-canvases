@@ -65,3 +65,7 @@ type OBSTextSourceSettings = {
     file: string;
     textSource: "static" | "file";
 };
+
+type OBSColorSourceSettings = {
+    color: number;
+};
