@@ -1,4 +1,5 @@
 import { Firebot } from "@crowbartools/firebot-custom-scripts-types";
+import effects from "./effects";
 import globals from "./globals";
 import obsRemote from "./obs-remote";
 import uiExtension from "./ui";
@@ -46,6 +47,7 @@ const script: Firebot.CustomScript<Params> = {
     };
   },
   run: (runRequest) => {
+    globals.effectManager = runRequest.modules.effectManager;
     globals.frontendCommunicator = runRequest.modules.frontendCommunicator;
     const logger = runRequest.modules.logger;
     globals.logger = {
@@ -57,6 +59,10 @@ const script: Firebot.CustomScript<Params> = {
 
     runRequest.modules.uiExtensionManager.registerUIExtension(uiExtension);
 
+    for (const effect of effects) {
+      runRequest.modules.effectManager.registerEffect(effect);
+    }
+
     obsRemote.connect(runRequest.parameters.obsHost, runRequest.parameters.obsPort, runRequest.parameters.obsPassword);
   },
   parametersUpdated: (params) => {
@@ -65,6 +71,10 @@ const script: Firebot.CustomScript<Params> = {
   stop: () => {
     obsRemote.abort = true;
     obsRemote.disconnect(true);
+
+    for (const effect of effects) {
+      globals.effectManager.unregisterEffect(effect.definition.id);
+    }
   }
 };
 

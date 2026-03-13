@@ -9,7 +9,10 @@ const factory: AngularJsFactory = {
 
         return {
             getObsSupportsCanvases: async (): Promise<boolean | null> => {
-                return await queryBackend("obsSupportsCanvases");
+                return queryBackend("obsSupportsCanvases");
+            },
+            getTextSources: async (): Promise<Array<OBSSource> | null> => {
+                return queryBackend("getTextSources");
             }
         }
     }
