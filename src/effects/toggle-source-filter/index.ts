@@ -17,6 +17,7 @@ type EffectScope = ng.IScope & { effect: EffectModel; } & Partial<{
     sourceListFiltered: OBSSource[];
     searchText: string;
     missingSources: EffectModel["selectedFilters"];
+    onlyShowSelected: boolean;
 
     filterIsSelected: (sourceUuid: string, filterName: string) => boolean;
     toggleFilterSelected: (sourceUuid: string, filterName: string) => void;
@@ -28,6 +29,7 @@ type EffectScope = ng.IScope & { effect: EffectModel; } & Partial<{
     deleteMissingFilter: (sourceUuid: string, filterName: string) => void;
     getStoredData: () => void;
     getSourceList: () => Promise<void>;
+    updateOnlyShowSelected: (value: boolean) => void;
 }>;
 
 const model: Effects.EffectType<EffectModel> = {
@@ -42,6 +44,7 @@ const model: Effects.EffectType<EffectModel> = {
     optionsController: ($scope: EffectScope, obsCanvasService: OBSCanvasService) => {
         $scope.searchText = "";
         $scope.missingSources = [];
+        $scope.onlyShowSelected = false;
 
         if ($scope.effect.selectedFilters == null) {
             $scope.effect.selectedFilters = [];
@@ -60,6 +63,8 @@ const model: Effects.EffectType<EffectModel> = {
                 const sourceName = source ? source.inputName : "";
                 $scope.effect.selectedFilters.push({ sourceUuid, sourceName, filterName, action: true });
             }
+
+            $scope.filterSources($scope.searchText);
         };
 
         $scope.setFilterAction = (sourceUuid: string, filterName: string, action: boolean | "toggle"): void => {
@@ -100,16 +105,30 @@ const model: Effects.EffectType<EffectModel> = {
                 .join(" ");
         };
 
+        $scope.updateOnlyShowSelected = (value: boolean) => {
+            $scope.onlyShowSelected = value;
+            $scope.filterSources($scope.searchText);
+        };
+
         $scope.filterSources = (searchText: string) => {
             if ($scope.searchText !== searchText) {
                 $scope.searchText = searchText;
             }
 
+            const normalizedSearchText = searchText.toLocaleLowerCase();
+
             $scope.sourceListFiltered = $scope.sourceList.filter((source) => {
-                if (source.inputName.toLocaleLowerCase().includes(searchText.toLocaleLowerCase())) {
-                    return true;
+
+                if ($scope.onlyShowSelected) {
+                    return source.filters?.some(filter => {
+                        const isSelected = $scope.filterIsSelected(source.inputUuid, filter.filterName);
+                        const filterMatchesSearch = filter.filterName.toLocaleLowerCase().includes(normalizedSearchText);
+
+                        return isSelected && filterMatchesSearch;
+                    }) || false;
                 }
-                return source.filters?.some(filter => filter.filterName.toLocaleLowerCase().includes(searchText.toLocaleLowerCase()));
+
+                return source.filters?.some(filter => filter.filterName.toLocaleLowerCase().includes(normalizedSearchText));
             });
         };
 

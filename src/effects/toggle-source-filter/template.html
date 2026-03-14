@@ -31,6 +31,13 @@
             <input type="text" class="form-control" ng-change="filterSources(searchText)" ng-model="searchText"
                 placeholder="Enter your search term here..." aria-describeby="obs-visibility-search-box">
         </div>
+        <div style="margin-top: 10px;">
+            <label class="control-fb control--checkbox">Only show selected
+                <input type="checkbox" ng-model="onlyShowSelected" ng-change="updateOnlyShowSelected(onlyShowSelected)"
+                    aria-label="Only show selected filters">
+                <div class="control__indicator"></div>
+            </label>
+        </div>
     </div>
     <div>
         <button class="btn btn-link" ng-click="getSourceList()">Refresh Filter Data</button>
@@ -38,7 +45,8 @@
     <div ng-if="sourceList != null && sourceList.length > 0" ng-repeat="source in sourceListFiltered">
         <div style="font-size: 16px;color: #b9b9b9;margin-bottom: 5px;"><b>{{source.inputName}}</b> <span
                 style="font-size: 13px;">({{formatSourceType(source.inputKind)}})</span></div>
-        <div ng-repeat="filter in source.filters | filter: {filterName: searchText}">
+        <div ng-repeat="filter in source.filters | filter: {filterName: searchText}"
+            ng-if="!onlyShowSelected || filterIsSelected(source.inputUuid, filter.filterName)">
             <label class="control-fb control--checkbox">{{filter.filterName}}
                 <input type="checkbox" ng-click="toggleFilterSelected(source.inputUuid, filter.filterName)"
                     ng-checked="filterIsSelected(source.inputUuid, filter.filterName)" aria-label="...">
@@ -60,6 +68,9 @@
                 </div>
             </div>
         </div>
+    </div>
+    <div ng-if="sourceList != null && sourceList.length > 0 && sourceListFiltered.length < 1" class="muted">
+        No matching filters found.
     </div>
     <div ng-if="sourceList != null && sourceList.length < 1" class="muted">
         No sources with filters found.
