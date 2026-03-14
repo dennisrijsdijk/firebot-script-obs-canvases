@@ -11,6 +11,9 @@ const factory: AngularJsFactory = {
             getColorSources: async (): Promise<Array<OBSSource> | null> => {
                 return queryBackend("getColorSources");
             },
+            getSourcesWithFilters: async (): Promise<Array<OBSSource> | null> => {
+                return queryBackend("getSourcesWithFilters");
+            },
             getTextSources: async (): Promise<Array<OBSSource> | null> => {
                 return queryBackend("getTextSources");
             },

@@ -7,6 +7,10 @@ type BackendCommunicatorCommands = {
         args: [];
         returns: Array<OBSSource> | null;
     }
+    getSourcesWithFilters: {
+        args: [];
+        returns: Array<OBSSource> | null;
+    };
     getTextSources: {
         args: [];
         returns: Array<OBSSource> | null;

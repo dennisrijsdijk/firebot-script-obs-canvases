@@ -82,6 +82,10 @@ class OBSRemote {
                 return this.getAllColorSources();
             });
 
+            this._frontendCommunicatorEvents["getSourcesWithFilters"] = ipcFrontend.on("getSourcesWithFilters", async () => {
+                return this.getSourcesWithFilters();
+            });
+
             this._frontendCommunicatorEvents["getTextSources"] = ipcFrontend.on("getTextSources", async () => {
                 return this.getAllTextSources();
             });
@@ -167,7 +171,7 @@ class OBSRemote {
         }
 
         try {
-            const response = await this.obs.callBatch(sceneItemsRequestBatch, { executionType: RequestBatchExecutionType.Parallel, haltOnFailure: false });
+            const response = await this.obs.callBatch(sceneItemsRequestBatch, { executionType: RequestBatchExecutionType.SerialRealtime, haltOnFailure: false });
             const groups: Array<OBSSource> = [];
             for (const res of response) {
                 if (res.requestStatus.result === false) {
@@ -238,13 +242,13 @@ class OBSRemote {
 
             const filtersRequestBatch: RequestBatchRequest[] = sources.map((source, index) => ({
                 requestType: "GetSourceFilterList",
-                requestId: `${index}`,
+                requestId: source.inputUuid,
                 requestData: {
                     sourceUuid: source.inputUuid
                 }
             }));
 
-            const response = await this.obs.callBatch(filtersRequestBatch, { executionType: RequestBatchExecutionType.Parallel, haltOnFailure: false });
+            const response = await this.obs.callBatch(filtersRequestBatch, { executionType: RequestBatchExecutionType.SerialRealtime, haltOnFailure: false });
 
             for (const res of response) {
                 if (res.requestStatus.result === false) {
@@ -258,7 +262,7 @@ class OBSRemote {
                     continue;
                 }
 
-                const source = sources[parseInt(res.requestId)];
+                const source = sources.find(s => s.inputUuid === res.requestId);
 
                 if (!source) {
                     continue;
@@ -354,6 +358,32 @@ class OBSRemote {
             });
         } catch (error) {
             globals.logger.error("Failed to set color source settings:", error);
+        }
+    }
+
+    async getSourcesWithFilters(): Promise<Array<OBSSource> | null> {
+        const sources = await this.getAllSources(true);
+        return sources?.filter(source => source.filters != null && source.filters.length > 0) || null;
+    }
+
+    async setFilterEnabledBatch(pendingActions: Array<{ sourceUuid: string; filterName: string; enabled: boolean }>): Promise<void> {
+        if (!this.connected) {
+            return;
+        }
+
+        const filterToggleBatch: RequestBatchRequest[] = pendingActions.map(action => ({
+            requestType: "SetSourceFilterEnabled",
+            requestData: {
+                sourceUuid: action.sourceUuid,
+                filterName: action.filterName,
+                filterEnabled: action.enabled
+            }
+        }));
+
+        try {
+            await this.obs.callBatch(filterToggleBatch, { executionType: RequestBatchExecutionType.Parallel, haltOnFailure: false });
+        } catch (error) {
+            globals.logger.error("Failed to toggle filters:", error);
         }
     }
 }

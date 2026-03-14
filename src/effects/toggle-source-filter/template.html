@@ -1,0 +1,70 @@
+<eos-container ng-show="missingSources.length > 0">
+    <div class="effect-info alert alert-warning">
+        <p><b>Warning!</b>
+            Cannot find {{missingSources.length}} sources in this effect. Ensure the correct profile or scene collection
+            is loaded in OBS, and OBS is running.
+        </p>
+    </div>
+</eos-container>
+<setting-container ng-show="missingSources.length > 0" header="Missing Filters ({{missingSources.length}})"
+    collapsed="true">
+    <div ng-repeat="source in missingSources track by $index">
+        <div class="list-item"
+            style="display: flex;border: 2px solid #3e4045;box-shadow: none;border-radius: 8px;padding: 5px 5px;">
+            <div class="pl-5">
+                <span>Source: {{source.sourceName}},</span>
+                <span>Name: {{source.filterName}},</span>
+                <span>Action: {{getMissingActionDisplay(source.action)}}</span>
+            </div>
+            <div>
+                <button class="btn btn-danger" ng-click="deleteMissingFilter(source.sourceUuid, source.filterName)"><i
+                        class="far fa-trash"></i></button>
+            </div>
+        </div>
+    </div>
+</setting-container>
+
+<eos-container header="Filters" pad-top="missingSources.length > 0">
+    <div class="effect-setting-container">
+        <div class="input-group">
+            <span class="input-group-addon">Filter</span>
+            <input type="text" class="form-control" ng-change="filterSources(searchText)" ng-model="searchText"
+                placeholder="Enter your search term here..." aria-describeby="obs-visibility-search-box">
+        </div>
+    </div>
+    <div>
+        <button class="btn btn-link" ng-click="getSourceList()">Refresh Filter Data</button>
+    </div>
+    <div ng-if="sourceList != null && sourceList.length > 0" ng-repeat="source in sourceListFiltered">
+        <div style="font-size: 16px;color: #b9b9b9;margin-bottom: 5px;"><b>{{source.inputName}}</b> <span
+                style="font-size: 13px;">({{formatSourceType(source.inputKind)}})</span></div>
+        <div ng-repeat="filter in source.filters | filter: {filterName: searchText}">
+            <label class="control-fb control--checkbox">{{filter.filterName}}
+                <input type="checkbox" ng-click="toggleFilterSelected(source.inputUuid, filter.filterName)"
+                    ng-checked="filterIsSelected(source.inputUuid, filter.filterName)" aria-label="...">
+                <div class="control__indicator"></div>
+            </label>
+            <div ng-show="filterIsSelected(source.inputUuid, filter.filterName)" style="margin-bottom: 15px;">
+                <div class="btn-group" uib-dropdown>
+                    <button id="single-button" type="button" class="btn btn-default" uib-dropdown-toggle>
+                        {{getFilterActionDisplay(source.inputUuid, filter.filterName)}} <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu" uib-dropdown-menu role="menu" aria-labelledby="single-button">
+                        <li role="menuitem" ng-click="setFilterAction(source.inputUuid, filter.filterName, true)"><a
+                                href>Enable</a></li>
+                        <li role="menuitem" ng-click="setFilterAction(source.inputUuid, filter.filterName, false)"><a
+                                href>Disable</a></li>
+                        <li role="menuitem" ng-click="setFilterAction(source.inputUuid, filter.filterName, 'toggle')"><a
+                                href>Toggle</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div ng-if="sourceList != null && sourceList.length < 1" class="muted">
+        No sources with filters found.
+    </div>
+    <div ng-if="sourceList == null" class="muted">
+        No sources found. Is OBS connected?
+    </div>
+</eos-container>
