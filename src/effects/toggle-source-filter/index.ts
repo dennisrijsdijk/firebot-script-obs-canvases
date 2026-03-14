@@ -16,18 +16,17 @@ type EffectScope = ng.IScope & { effect: EffectModel; } & Partial<{
     sourceList: OBSSource[];
     sourceListFiltered: OBSSource[];
     searchText: string;
-    missingSources: EffectModel["selectedFilters"];
+    missingFilters: EffectModel["selectedFilters"];
     onlyShowSelected: boolean;
 
     filterIsSelected: (sourceUuid: string, filterName: string) => boolean;
     toggleFilterSelected: (sourceUuid: string, filterName: string) => void;
     setFilterAction: (sourceUuid: string, filterName: string, action: boolean | "toggle") => void;
     getFilterActionDisplay: (sourceUuid: string, filterName: string) => string;
-    getMissingActionDisplay: (action: boolean | "toggle") => string;
+    getActionDisplay: (action: boolean | "toggle") => string;
     formatSourceType: (type: string) => string;
     filterSources: (searchText: string) => void;
     deleteMissingFilter: (sourceUuid: string, filterName: string) => void;
-    getStoredData: () => void;
     getSourceList: () => Promise<void>;
     updateOnlyShowSelected: (value: boolean) => void;
 }>;
@@ -43,7 +42,7 @@ const model: Effects.EffectType<EffectModel> = {
     optionsTemplate: template,
     optionsController: ($scope: EffectScope, obsCanvasService: OBSCanvasService) => {
         $scope.searchText = "";
-        $scope.missingSources = [];
+        $scope.missingFilters = [];
         $scope.onlyShowSelected = false;
 
         if ($scope.effect.selectedFilters == null) {
@@ -77,13 +76,10 @@ const model: Effects.EffectType<EffectModel> = {
         $scope.getFilterActionDisplay = (sourceUuid: string, filterName: string): string => {
             const filter = $scope.effect.selectedFilters.find(filter => filter.sourceUuid === sourceUuid && filter.filterName === filterName);
 
-            // I don't love this but it works for now
-            $scope.missingSources = $scope.missingSources.filter(m => !(m.sourceUuid === sourceUuid && m.filterName === filterName));
-
-            return filter ? $scope.getMissingActionDisplay(filter.action) : "";
+            return filter ? $scope.getActionDisplay(filter.action) : "";
         };
 
-        $scope.getMissingActionDisplay = (action: boolean | "toggle"): string => {
+        $scope.getActionDisplay = (action: boolean | "toggle"): string => {
             switch (action) {
                 case true:
                     return "Enable";
@@ -134,21 +130,20 @@ const model: Effects.EffectType<EffectModel> = {
 
         $scope.deleteMissingFilter = (sourceUuid: string, filterName: string) => {
             $scope.effect.selectedFilters = $scope.effect.selectedFilters.filter(filter => !(filter.sourceUuid === sourceUuid && filter.filterName === filterName));
-            $scope.missingSources = $scope.missingSources.filter(m => !(m.sourceUuid === sourceUuid && m.filterName === filterName));
-        };
-
-        $scope.getStoredData = () => {
-            for (const filterName of $scope.effect.selectedFilters) {
-                $scope.missingSources.push(filterName);
-            }
+            $scope.missingFilters = $scope.missingFilters.filter(m => !(m.sourceUuid === sourceUuid && m.filterName === filterName));
         };
 
         $scope.getSourceList = async () => {
             $scope.sourceList = [];
-            $scope.missingSources = [];
+            $scope.missingFilters = [];
             $scope.sourceList = await obsCanvasService.getSourcesWithFilters() || [];
             
-            $scope.getStoredData();
+            for (const filter of $scope.effect.selectedFilters) {
+                if (!$scope.sourceList.some(s => s.inputUuid === filter.sourceUuid && s.filters?.some(f => f.filterName === filter.filterName))) {
+                    $scope.missingFilters.push(filter);
+                }
+            }
+
             $scope.filterSources($scope.searchText);
         };
 

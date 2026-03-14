@@ -1,30 +1,30 @@
-<eos-container ng-show="missingSources.length > 0">
+<eos-container ng-show="missingFilters.length > 0">
     <div class="effect-info alert alert-warning">
         <p><b>Warning!</b>
-            Cannot find {{missingSources.length}} sources in this effect. Ensure the correct profile or scene collection
+            Cannot find {{missingFilters.length}} filters in this effect. Ensure the correct profile or scene collection
             is loaded in OBS, and OBS is running.
         </p>
     </div>
 </eos-container>
-<setting-container ng-show="missingSources.length > 0" header="Missing Filters ({{missingSources.length}})"
+<setting-container ng-show="missingFilters.length > 0" header="Missing Filters ({{missingFilters.length}})"
     collapsed="true">
-    <div ng-repeat="source in missingSources track by $index">
+    <div ng-repeat="filter in missingFilters track by $index">
         <div class="list-item"
             style="display: flex;border: 2px solid #3e4045;box-shadow: none;border-radius: 8px;padding: 5px 5px;">
             <div class="pl-5">
-                <span>Source: {{source.sourceName}},</span>
-                <span>Name: {{source.filterName}},</span>
-                <span>Action: {{getMissingActionDisplay(source.action)}}</span>
+                <span>Source: {{filter.sourceName}},</span>
+                <span>Name: {{filter.filterName}},</span>
+                <span>Action: {{getActionDisplay(filter.action)}}</span>
             </div>
             <div>
-                <button class="btn btn-danger" ng-click="deleteMissingFilter(source.sourceUuid, source.filterName)"><i
+                <button class="btn btn-danger" ng-click="deleteMissingFilter(filter.sourceUuid, filter.filterName)"><i
                         class="far fa-trash"></i></button>
             </div>
         </div>
     </div>
 </setting-container>
 
-<eos-container header="Filters" pad-top="missingSources.length > 0">
+<eos-container header="Filters" pad-top="missingFilters.length > 0">
     <div class="effect-setting-container">
         <div class="input-group">
             <span class="input-group-addon">Filter</span>
