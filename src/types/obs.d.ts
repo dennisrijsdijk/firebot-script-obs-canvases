@@ -52,10 +52,6 @@ type OBSCanvas = {
     };
 };
 
-type OBSCanvasesResponse = {
-    canvases: Array<OBSCanvas>;
-};
-
 type CanvasWithScenes = OBSCanvas & {
     scenes: Array<OBSScene>;
 };

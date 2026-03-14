@@ -117,8 +117,7 @@ class OBSRemote {
         }
 
         try {
-            // @ts-expect-error - Old version of obs-websocket-js doesn't have GetCanvasList typed
-            const response: OBSCanvasesResponse = await this.obs.call("GetCanvasList");
+            const response = await this.obs.call("GetCanvasList") as { canvases: Array<OBSCanvas> };
             return response.canvases;
         } catch (error) {
             globals.logger.error("Failed to get canvases:", error);
@@ -134,7 +133,6 @@ class OBSRemote {
 
         try {
             for (const canvas of canvases) {
-                // @ts-expect-error - Old version of obs-websocket-js doesn't have canvasUuid for GetSceneList
                 const response = await this.obs.call("GetSceneList", { canvasUuid: canvas.canvasUuid });
                 canvas.scenes = response.scenes as Array<OBSScene>;
             }
@@ -163,7 +161,6 @@ class OBSRemote {
                     requestType: "GetSceneItemList",
                     requestData: {
                         sceneName: scene.sceneName,
-                        // @ts-expect-error - Old version of obs-websocket-js doesn't have canvasUuid for GetSceneItemList
                         canvasUuid: canvas.canvasUuid
                     }
                 });
