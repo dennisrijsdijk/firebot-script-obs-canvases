@@ -16,7 +16,7 @@ const script: Firebot.CustomScript<Params> = {
       name: "OBS Control (Canvases)",
       description: "Firebot script to leverage OBS Websocket Canvas Support (OBS 32.1.0 or higher required)",
       author: "DennisOnTheInternet",
-      version: "1.0",
+      version: "1.0.1",
       firebotVersion: "5",
       startupOnly: true
     };
