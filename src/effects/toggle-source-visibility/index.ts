@@ -71,7 +71,7 @@ const model: Effects.EffectType<EffectModel> = {
                         sourceName: source.inputName,
                         groupName: source.groupName,
                         groupUuid: source.groupUuid,
-                        action: "toggle"
+                        action: true
                     });
                 }
             }
