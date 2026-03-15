@@ -1,11 +1,13 @@
 import OBSWebSocket, { RequestBatchExecutionType, RequestBatchRequest } from "obs-websocket-js";
 import globals from "./globals";
 import ipcFrontend from "./ipc-frontend";
+import { OBSTransform } from "./obs-transform";
 
 class OBSRemote {
     abort: boolean = false;
     connected: boolean = false;
     obs: OBSWebSocket = new OBSWebSocket();
+    transform = new OBSTransform(this);
     private _reconnectTimeout: NodeJS.Timeout | null = null;
     private _frontendCommunicatorEvents: Partial<Record<keyof BackendCommunicatorCommands, string>> = {};
 
@@ -556,5 +558,7 @@ class OBSRemote {
         }
     }
 }
+
+export type { OBSRemote };
 
 export default new OBSRemote();

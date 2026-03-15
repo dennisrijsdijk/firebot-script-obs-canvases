@@ -88,3 +88,10 @@ type OBSSourceVisibilityData = {
     groupUuid?: string;
     action: boolean | "toggle";
 }
+
+type OBSSourceTransformKeys =
+    | "positionX"
+    | "positionY"
+    | "scaleX"
+    | "scaleY"
+    | "rotation";
