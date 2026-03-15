@@ -49,12 +49,12 @@
     <div style="height: 15px;"></div>
 
     <div ng-if="supportsCanvases" class="effect-setting-container">
-        <setting-container ng-if="canvasedSourceData != null" ng-repeat="canvas in filteredCanvasedSourceData"
-            header="{{canvas.canvasName}}">
-            <div ng-repeat="scene in canvas.scenes">
+        <setting-container ng-if="canvasedSourceData != null" ng-repeat="canvas in canvasedSourceData"
+            header="{{canvas.canvasName}}" ng-show="matchingCanvases.includes(canvas.canvasUuid)">
+            <div ng-repeat="scene in canvas.scenes" ng-show="matchingScenes.includes(scene.sceneUuid)">
                 <div style="font-size: 16px;font-weight: 900;color: #b9b9b9;margin-bottom: 5px;">{{scene.sceneName}}
                 </div>
-                <div ng-repeat="source in scene.sources">
+                <div ng-repeat="source in scene.sources | filter: {inputName: searchText}" ng-show="!onlyShowSelected || sourceIsSelected(scene.sceneUuid, source.sceneItemId, source.groupUuid)">
                     <label class="control-fb control--checkbox">{{source.inputName}}
                         <input type="checkbox" ng-click="toggleSourceSelected(scene.sceneUuid, source.sceneItemId, source.groupUuid)"
                             ng-checked="sourceIsSelected(scene.sceneUuid, source.sceneItemId, source.groupUuid)" aria-label="...">

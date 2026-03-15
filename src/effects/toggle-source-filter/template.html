@@ -42,12 +42,12 @@
     <div>
         <button class="btn btn-link" ng-click="getSourceList()">Refresh Filter Data</button>
     </div>
-    <div ng-if="supportsCanvases && sourceList != null && sourceList.length > 0"
-        ng-repeat="source in sourceListFiltered">
+    <div ng-if="supportsCanvases && sourceList != null && sourceList.length > 0" ng-show="matchingSources.includes(source.inputUuid)"
+        ng-repeat="source in sourceList">
         <div style="font-size: 16px;color: #b9b9b9;margin-bottom: 5px;"><b>{{source.inputName}}</b> <span
                 style="font-size: 13px;">({{formatSourceType(source.inputKind)}})</span></div>
         <div ng-repeat="filter in source.filters | filter: {filterName: searchText}"
-            ng-if="!onlyShowSelected || filterIsSelected(source.inputUuid, filter.filterName)">
+            ng-show="!onlyShowSelected || filterIsSelected(source.inputUuid, filter.filterName)">
             <label class="control-fb control--checkbox">{{filter.filterName}}
                 <input type="checkbox" ng-click="toggleFilterSelected(source.inputUuid, filter.filterName)"
                     ng-checked="filterIsSelected(source.inputUuid, filter.filterName)" aria-label="...">

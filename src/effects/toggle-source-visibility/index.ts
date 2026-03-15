@@ -9,10 +9,11 @@ type EffectModel = {
 
 type EffectScope = ng.IScope & { effect: EffectModel; } & Partial<{
     canvasedSourceData: OBSCanvasedSourceData[];
-    filteredCanvasedSourceData: OBSCanvasedSourceData[];
     searchText: string;
     missingSources: EffectModel["selectedSources"];
     onlyShowSelected: boolean;
+    matchingCanvases: string[];
+    matchingScenes: string[];
 
     supportsCanvases: boolean;
 
@@ -114,36 +115,12 @@ const model: Effects.EffectType<EffectModel> = {
                 $scope.searchText = searchText;
             }
 
-            const filteredData: OBSCanvasedSourceData[] = [];
+            $scope.matchingScenes = $scope.canvasedSourceData?.flatMap(canvas => canvas.scenes).filter(scene => {
+                return scene.sources.some(source => source.inputName.toLowerCase().includes(searchText.toLowerCase()) &&
+                (!$scope.onlyShowSelected || $scope.effect.selectedSources.some(s => s.sceneUuid === scene.sceneUuid && s.sceneItemId === source.sceneItemId && s.groupUuid === source.groupUuid)));
+            }).map(s => s.sceneUuid) || [];
 
-            for (const canvas of $scope.canvasedSourceData) {
-                const canvasData: OBSCanvasedSourceData = {
-                    canvasName: canvas.canvasName,
-                    canvasUuid: canvas.canvasUuid,
-                    scenes: []
-                }
-
-                for (const scene of canvas.scenes) {
-                    const sceneData: OBSCanvasedSourceData["scenes"][number] = {
-                        sceneName: scene.sceneName,
-                        sceneUuid: scene.sceneUuid,
-                        sources: scene.sources.filter(source => {
-                            const matchesSearch = source.inputName.toLowerCase().includes(searchText.toLowerCase());
-                            const isSelected = $scope.effect.selectedSources.some(s => s.sceneUuid === scene.sceneUuid && s.sceneItemId === source.sceneItemId);
-                            return matchesSearch && (!$scope.onlyShowSelected || isSelected);
-                        })
-                    };
-
-                    if (sceneData.sources.length > 0) {
-                        canvasData.scenes.push(sceneData);
-                    }
-                }
-
-                if (canvasData.scenes.length > 0) {
-                    filteredData.push(canvasData);
-                }
-            }
-            $scope.filteredCanvasedSourceData = filteredData;
+            $scope.matchingCanvases = $scope.canvasedSourceData?.filter(canvas => canvas.scenes.some(scene => $scope.matchingScenes.includes(scene.sceneUuid))).map(c => c.canvasUuid) || [];
         };
 
         $scope.getSourceData = async (): Promise<void> => {

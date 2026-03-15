@@ -14,10 +14,10 @@ type EffectModel = {
 
 type EffectScope = ng.IScope & { effect: EffectModel; } & Partial<{
     sourceList: OBSSource[];
-    sourceListFiltered: OBSSource[];
     searchText: string;
     missingFilters: EffectModel["selectedFilters"];
     onlyShowSelected: boolean;
+    matchingSources: string[];
 
     supportsCanvases: boolean;
 
@@ -47,6 +47,7 @@ const model: Effects.EffectType<EffectModel> = {
         $scope.missingFilters = [];
         $scope.onlyShowSelected = false;
         $scope.supportsCanvases = false;
+        $scope.matchingSources = [];
 
         if ($scope.effect.selectedFilters == null) {
             $scope.effect.selectedFilters = [];
@@ -116,19 +117,12 @@ const model: Effects.EffectType<EffectModel> = {
 
             const normalizedSearchText = searchText.toLocaleLowerCase();
 
-            $scope.sourceListFiltered = $scope.sourceList.filter((source) => {
-
-                if ($scope.onlyShowSelected) {
-                    return source.filters?.some(filter => {
-                        const isSelected = $scope.filterIsSelected(source.inputUuid, filter.filterName);
-                        const filterMatchesSearch = filter.filterName.toLocaleLowerCase().includes(normalizedSearchText);
-
-                        return isSelected && filterMatchesSearch;
-                    }) || false;
-                }
-
-                return source.filters?.some(filter => filter.filterName.toLocaleLowerCase().includes(normalizedSearchText));
-            });
+            $scope.matchingSources = $scope.sourceList.filter((source) => {
+                return source.filters?.some((filter) => {
+                    return filter.filterName.toLocaleLowerCase().includes(normalizedSearchText) &&
+                    (!$scope.onlyShowSelected || $scope.filterIsSelected(source.inputUuid, filter.filterName))
+                });
+            }).map(s => s.inputUuid);
         };
 
         $scope.deleteMissingFilter = (sourceUuid: string, filterName: string) => {
@@ -146,7 +140,7 @@ const model: Effects.EffectType<EffectModel> = {
             $scope.sourceList = [];
             $scope.missingFilters = [];
             $scope.sourceList = await obsCanvasService.getSourcesWithFilters() || [];
-            
+
             for (const filter of $scope.effect.selectedFilters) {
                 if (!$scope.sourceList.some(s => s.inputUuid === filter.sourceUuid && s.filters?.some(f => f.filterName === filter.filterName))) {
                     $scope.missingFilters.push(filter);
