@@ -1,4 +1,4 @@
-<eos-container ng-show="missingFilters.length > 0">
+<eos-container ng-show="supportsCanvases && missingFilters.length > 0">
     <div class="effect-info alert alert-warning">
         <p><b>Warning!</b>
             Cannot find {{missingFilters.length}} filters in this effect. Ensure the correct profile or scene collection
@@ -6,8 +6,8 @@
         </p>
     </div>
 </eos-container>
-<setting-container ng-show="missingFilters.length > 0" header="Missing Filters ({{missingFilters.length}})"
-    collapsed="true">
+<setting-container ng-show="supportsCanvases && missingFilters.length > 0"
+    header="Missing Filters ({{missingFilters.length}})" collapsed="true">
     <div ng-repeat="filter in missingFilters track by $index">
         <div class="list-item"
             style="display: flex;border: 2px solid #3e4045;box-shadow: none;border-radius: 8px;padding: 5px 5px;">
@@ -42,7 +42,8 @@
     <div>
         <button class="btn btn-link" ng-click="getSourceList()">Refresh Filter Data</button>
     </div>
-    <div ng-if="sourceList != null && sourceList.length > 0" ng-repeat="source in sourceListFiltered">
+    <div ng-if="supportsCanvases && sourceList != null && sourceList.length > 0"
+        ng-repeat="source in sourceListFiltered">
         <div style="font-size: 16px;color: #b9b9b9;margin-bottom: 5px;"><b>{{source.inputName}}</b> <span
                 style="font-size: 13px;">({{formatSourceType(source.inputKind)}})</span></div>
         <div ng-repeat="filter in source.filters | filter: {filterName: searchText}"
@@ -69,13 +70,26 @@
             </div>
         </div>
     </div>
-    <div ng-if="sourceList != null && sourceList.length > 0 && sourceListFiltered.length < 1" class="muted">
+    <div ng-if="supportsCanvases && sourceList != null && sourceList.length > 0 && sourceListFiltered.length < 1"
+        class="muted">
         No matching filters found.
     </div>
-    <div ng-if="sourceList != null && sourceList.length < 1" class="muted">
+    <div ng-if="supportsCanvases && sourceList != null && sourceList.length < 1" class="muted">
         No sources with filters found.
     </div>
-    <div ng-if="sourceList == null" class="muted">
+    <div ng-if="supportsCanvases && sourceList == null" class="muted">
         No sources found. Is OBS connected?
     </div>
 </eos-container>
+
+<div ng-if="supportsCanvases === null">
+    <eos-container header="Unable to connect to OBS" pad-top="true">
+        <p>Please ensure OBS is running and the Websocket server is properly configured.</p>
+    </eos-container>
+</div>
+
+<div ng-if="supportsCanvases === false">
+    <eos-container header="OBS Canvas Not Supported" pad-top="true">
+        <p>Your version of OBS does not support canvases over Websocket. Please update to at least OBS 32.1.0</p>
+    </eos-container>
+</div>

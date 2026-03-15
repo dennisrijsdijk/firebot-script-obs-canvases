@@ -27,6 +27,8 @@ type EffectScope = ng.IScope & { effect: EffectModel; } & Partial<{
     selectedScene: OBSCanvasedSourceData["scenes"][number];
     selectedSource: OBSSource;
 
+    supportsCanvases: boolean;
+
     getSceneItems: (sceneUuid: string) => OBSSource[];
     selectScene: (scene: OBSCanvasedSourceData["scenes"][number]) => void;
     selectSource: (source: OBSSource) => void;
@@ -43,6 +45,7 @@ const model: Effects.EffectType<EffectModel> = {
     },
     optionsTemplate: template,
     optionsController: ($scope: EffectScope, obsCanvasService: OBSCanvasService) => {
+        $scope.supportsCanvases = false;
         $scope.canvasedSourceData = [];
         $scope.alignmentOptions = Object.freeze({
             [5]: "Top Left",
@@ -78,6 +81,12 @@ const model: Effects.EffectType<EffectModel> = {
         };
 
         $scope.getSourceData = async (): Promise<void> => {
+            $scope.supportsCanvases = await obsCanvasService.getObsSupportsCanvases();
+
+            if (!$scope.supportsCanvases) {
+                return;
+            }
+
             const canvasedSourceData = await obsCanvasService.getCanvasedSourceData();
             for (const canvas of canvasedSourceData) {
                 for (const scene of canvas.scenes) {

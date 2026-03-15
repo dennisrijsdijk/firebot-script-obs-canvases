@@ -14,6 +14,8 @@ type EffectScope = ng.IScope & { effect: EffectModel; } & Partial<{
     missingSources: EffectModel["selectedSources"];
     onlyShowSelected: boolean;
 
+    supportsCanvases: boolean;
+
     sourceIsSelected: (sceneUuid: string, sceneItemId: number, groupUuid?: string) => boolean;
     deleteSource: (source: OBSSourceVisibilityData) => void;
     toggleSourceSelected: (sceneUuid: string, sceneItemId: number, groupUuid?: string) => void;
@@ -35,6 +37,8 @@ const model: Effects.EffectType<EffectModel> = {
     },
     optionsTemplate: template,
     optionsController: ($scope: EffectScope, obsCanvasService: OBSCanvasService) => {
+        $scope.supportsCanvases = false;
+
         if ($scope.effect.selectedSources == null) {
             $scope.effect.selectedSources = [];
         }
@@ -143,6 +147,12 @@ const model: Effects.EffectType<EffectModel> = {
         };
 
         $scope.getSourceData = async (): Promise<void> => {
+            $scope.supportsCanvases = await obsCanvasService.getObsSupportsCanvases();
+
+            if (!$scope.supportsCanvases) {
+                return;
+            }
+
             $scope.canvasedSourceData = [];
             $scope.missingSources = [];
             $scope.canvasedSourceData = await obsCanvasService.getCanvasedSourceData();

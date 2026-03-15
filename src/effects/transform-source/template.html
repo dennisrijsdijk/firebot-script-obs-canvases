@@ -2,7 +2,7 @@
     <div>
         <button class="btn btn-link" ng-click="getScenes()">Refresh Scene Data</button>
     </div>
-    <ui-select ng-if="canvasedSourceData != null" ng-model="selectedScene" on-select="selectScene($select.selected)">
+    <ui-select ng-if="supportsCanvases && canvasedSourceData != null" ng-model="selectedScene" on-select="selectScene($select.selected)">
         <ui-select-match placeholder="Select a Scene...">{{$select.selected.sceneName}}</ui-select-match>
         <ui-select-choices repeat="scene in canvasedSourceData | filter: {sceneName: $select.search}">
             <div ng-bind-html="scene.sceneName | highlight: $select.search"></div>
@@ -12,11 +12,11 @@
         </ui-select-no-choice>
     </ui-select>
 </eos-container>
-<eos-container ng-if="canvasedSourceData != null && effect.sceneUuid != null" header="OBS Source" pad-top="true">
+<eos-container ng-if="supportsCanvases && canvasedSourceData != null && effect.sceneUuid != null" header="OBS Source" pad-top="true">
     <div>
         <button class="btn btn-link" ng-click="getSourceData()">Refresh Source Data</button>
     </div>
-    <ui-select ng-if="canvasedSourceData != null" ng-model="selectedSource"
+    <ui-select ng-if="supportsCanvases && canvasedSourceData != null" ng-model="selectedSource"
         on-select="selectSource($select.selected)">
         <ui-select-match placeholder="Select a Source...">{{$select.selected.inputName}}</ui-select-match>
         <ui-select-choices repeat="sceneItem in getSceneItems(effect.sceneUuid) | filter: {inputName: $select.search}">
@@ -30,7 +30,7 @@
         No transformable sources found. Is OBS connected?
     </div>
 </eos-container>
-<div ng-if="effect.sceneItemId != null">
+<div ng-if="supportsCanvases && effect.sceneItemId != null">
     <eos-container header="Duration" pad-top="true">
         <firebot-input input-type="number" input-title="Duration" placeholder-text="seconds" model="effect.duration"
             style="margin-bottom: 20px;" />
@@ -87,5 +87,17 @@
                     model="effect.endTransform.rotation" style="flex-basis: 50%" />
             </div>
         </div>
+    </eos-container>
+</div>
+
+<div ng-if="supportsCanvases === null">
+    <eos-container header="Unable to connect to OBS" pad-top="true">
+        <p>Please ensure OBS is running and the Websocket server is properly configured.</p>
+    </eos-container>
+</div>
+
+<div ng-if="supportsCanvases === false">
+    <eos-container header="OBS Canvas Not Supported" pad-top="true">
+        <p>Your version of OBS does not support canvases over Websocket. Please update to at least OBS 32.1.0</p>
     </eos-container>
 </div>

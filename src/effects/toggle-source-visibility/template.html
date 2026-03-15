@@ -1,4 +1,4 @@
-<eos-container ng-show="missingSources.length > 0">
+<eos-container ng-show="supportsCanvases && missingSources.length > 0">
     <div class="effect-info alert alert-warning">
         <p><b>Warning!</b>
             Cannot find {{missingSources.length}} sources in this effect. Ensure the correct profile or scene collection
@@ -6,7 +6,7 @@
         </p>
     </div>
 </eos-container>
-<setting-container ng-show="missingSources.length > 0" header="Missing Sources ({{missingSources.length}})"
+<setting-container ng-show="supportsCanvases && missingSources.length > 0" header="Missing Sources ({{missingSources.length}})"
     collapsed="true" style="margin-bottom: 15px;">
     <div ng-repeat="source in missingSources track by $index">
         <div class="list-item"
@@ -48,7 +48,7 @@
 
     <div style="height: 15px;"></div>
 
-    <div class="effect-setting-container">
+    <div ng-if="supportsCanvases" class="effect-setting-container">
         <setting-container ng-if="canvasedSourceData != null" ng-repeat="canvas in filteredCanvasedSourceData"
             header="{{canvas.canvasName}}">
             <div ng-repeat="scene in canvas.scenes">
@@ -85,8 +85,20 @@
                 </div>
             </div>
         </setting-container>
-        <div ng-if="canvasedSourceData == null" class="muted">
+        <div ng-if="supportsCanvases && canvasedSourceData == null" class="muted">
             No sources found. Is OBS connected?
         </div>
     </div>
+</div>
+
+<div ng-if="supportsCanvases === null">
+    <eos-container header="Unable to connect to OBS" pad-top="true">
+        <p>Please ensure OBS is running and the Websocket server is properly configured.</p>
+    </eos-container>
+</div>
+
+<div ng-if="supportsCanvases === false">
+    <eos-container header="OBS Canvas Not Supported" pad-top="true">
+        <p>Your version of OBS does not support canvases over Websocket. Please update to at least OBS 32.1.0</p>
+    </eos-container>
 </div>

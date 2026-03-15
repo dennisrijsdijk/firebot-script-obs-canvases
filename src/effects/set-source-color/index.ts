@@ -13,6 +13,9 @@ type EffectModel = {
 type EffectScope = ng.IScope & { effect: EffectModel; } & Partial<{
     colorSources: Array<OBSSource>;
     selected: OBSSource;
+
+    supportsCanvases: boolean;
+
     selectColorSource: (colorSource: OBSSource) => void;
     toggleCustomColor: () => void;
     getColorSources: () => Promise<void>;
@@ -35,6 +38,8 @@ const model: Effects.EffectType<EffectModel> = {
     },
     optionsTemplate: template,
     optionsController: ($scope: EffectScope, obsCanvasService: OBSCanvasService) => {
+        $scope.supportsCanvases = false;
+
         if ($scope.effect.customColor == null) {
             $scope.effect.customColor = false;
         }
@@ -53,6 +58,12 @@ const model: Effects.EffectType<EffectModel> = {
         };
 
         $scope.getColorSources = async () => {
+            $scope.supportsCanvases = await obsCanvasService.getObsSupportsCanvases();
+
+            if (!$scope.supportsCanvases) {
+                return;
+            }
+
             $scope.colorSources = await obsCanvasService.getColorSources();
             if ($scope.colorSources) {
                 $scope.selected = $scope.colorSources.find(source => source.inputUuid === $scope.effect.colorSourceUuid);

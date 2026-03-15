@@ -1,36 +1,43 @@
 <eos-container header="OBS Color Source">
-        <div>
-            <button class="btn btn-link" ng-click="getColorSources()">Refresh Source Data</button>
-        </div>
+    <div>
+        <button class="btn btn-link" ng-click="getColorSources()">Refresh Source Data</button>
+    </div>
 
-        <ui-select ng-if="colorSources != null" ng-model="selected" on-select="selectColorSource($select.selected)">
-            <ui-select-match placeholder="Select a Color Source...">{{$select.selected.inputName}}</ui-select-match>
-            <ui-select-choices repeat="source in colorSources | filter: { inputName: $select.search }">
-                <div ng-bind-html="source.inputName | highlight: $select.search"></div>
-            </ui-select-choices>
-            <ui-select-no-choice>
-                <b>No color sources found.</b>
-            </ui-select-no-choice>
-        </ui-select>
+    <ui-select ng-if="supportsCanvases && colorSources != null" ng-model="selected"
+        on-select="selectColorSource($select.selected)">
+        <ui-select-match placeholder="Select a Color Source...">{{$select.selected.inputName}}</ui-select-match>
+        <ui-select-choices repeat="source in colorSources | filter: { inputName: $select.search }">
+            <div ng-bind-html="source.inputName | highlight: $select.search"></div>
+        </ui-select-choices>
+        <ui-select-no-choice>
+            <b>No color sources found.</b>
+        </ui-select-no-choice>
+    </ui-select>
 
-        <div ng-if="colorSources == null" class="muted">
-            No sources found. Is OBS connected?
-        </div>
+    <div ng-if="supportsCanvases && colorSources == null" class="muted">
+        No sources found. Is OBS connected?
+    </div>
+</eos-container>
+
+<eos-container ng-if="supportsCanvases && colorSources != null && effect.colorSourceUuid != null" header="Color"
+    style="margin-top: 10px;" pad-top="true">
+    <firebot-checkbox label="Use Custom Color"
+        tooltip="Allow entering custom hex colors or replace variables. Will fail if the result is not a valid hex color."
+        model="effect.customColor" on-change="toggleCustomColor(newValue)" class="mb4" />
+    <firebot-input input-title="#RGBA" ng-if="effect.customColor" model="effect.color"
+        placeholder-text="Format: #0066FF or #FF336699" />
+    <color-picker-input label="#RGBA" ng-if="!effect.customColor" model="effect.color" alpha="true"
+        lg-input="true"></color-picker-input>
+</eos-container>
+
+<div ng-if="supportsCanvases === null">
+    <eos-container header="Unable to connect to OBS" pad-top="true">
+        <p>Please ensure OBS is running and the Websocket server is properly configured.</p>
     </eos-container>
+</div>
 
-    <eos-container ng-if="colorSources != null && effect.colorSourceUuid != null" header="Color" style="margin-top: 10px;" pad-top="true">
-        <firebot-checkbox
-            label="Use Custom Color"
-            tooltip="Allow entering custom hex colors or replace variables. Will fail if the result is not a valid hex color."
-            model="effect.customColor"
-            on-change="toggleCustomColor(newValue)"
-            class="mb4"
-        />
-        <firebot-input
-            input-title="#RGBA"
-            ng-if="effect.customColor"
-            model="effect.color"
-            placeholder-text="Format: #0066FF or #FF336699"
-        />
-        <color-picker-input label="#RGBA" ng-if="!effect.customColor" model="effect.color" alpha="true" lg-input="true"></color-picker-input>
+<div ng-if="supportsCanvases === false">
+    <eos-container header="OBS Canvas Not Supported" pad-top="true">
+        <p>Your version of OBS does not support canvases over Websocket. Please update to at least OBS 32.1.0</p>
     </eos-container>
+</div>

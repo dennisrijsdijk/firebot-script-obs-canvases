@@ -13,6 +13,9 @@ type EffectModel = {
 type EffectScope = ng.IScope & { effect: EffectModel; } & Partial<{
     textSources: Array<OBSSource>;
     selected: OBSSource;
+
+    supportsCanvases: boolean;
+
     selectTextSource: (textSource: OBSSource) => void;
     toggleSource: () => void;
     textFileUpdated: (file: string) => void;
@@ -29,6 +32,8 @@ const model: Effects.EffectType<EffectModel> = {
     },
     optionsTemplate: template,
     optionsController: ($scope: EffectScope, obsCanvasService: OBSCanvasService) => {
+        $scope.supportsCanvases = false;
+
         if ($scope.effect.textSource == null) {
             $scope.effect.textSource = "static";
         }
@@ -47,6 +52,12 @@ const model: Effects.EffectType<EffectModel> = {
         };
 
         $scope.getTextSources = async () => {
+            $scope.supportsCanvases = await obsCanvasService.getObsSupportsCanvases();
+
+            if (!$scope.supportsCanvases) {
+                return;
+            }
+
             $scope.textSources = await obsCanvasService.getTextSources();
             if ($scope.textSources) {
                 $scope.selected = $scope.textSources.find(source => source.inputUuid === $scope.effect.textSourceUuid);

@@ -19,6 +19,8 @@ type EffectScope = ng.IScope & { effect: EffectModel; } & Partial<{
     missingFilters: EffectModel["selectedFilters"];
     onlyShowSelected: boolean;
 
+    supportsCanvases: boolean;
+
     filterIsSelected: (sourceUuid: string, filterName: string) => boolean;
     toggleFilterSelected: (sourceUuid: string, filterName: string) => void;
     setFilterAction: (sourceUuid: string, filterName: string, action: boolean | "toggle") => void;
@@ -44,6 +46,7 @@ const model: Effects.EffectType<EffectModel> = {
         $scope.searchText = "";
         $scope.missingFilters = [];
         $scope.onlyShowSelected = false;
+        $scope.supportsCanvases = false;
 
         if ($scope.effect.selectedFilters == null) {
             $scope.effect.selectedFilters = [];
@@ -134,6 +137,12 @@ const model: Effects.EffectType<EffectModel> = {
         };
 
         $scope.getSourceList = async () => {
+            $scope.supportsCanvases = await obsCanvasService.getObsSupportsCanvases();
+
+            if (!$scope.supportsCanvases) {
+                return;
+            }
+
             $scope.sourceList = [];
             $scope.missingFilters = [];
             $scope.sourceList = await obsCanvasService.getSourcesWithFilters() || [];
