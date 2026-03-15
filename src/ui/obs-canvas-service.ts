@@ -8,6 +8,9 @@ const factory: AngularJsFactory = {
         }
 
         return {
+            getCanvasedSourceData: async (): Promise<Array<OBSCanvasedSourceData> | null> => {
+                return queryBackend("getCanvasedSourceData");
+            },
             getColorSources: async (): Promise<Array<OBSSource> | null> => {
                 return queryBackend("getColorSources");
             },

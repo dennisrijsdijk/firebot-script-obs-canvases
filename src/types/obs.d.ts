@@ -8,6 +8,9 @@ type OBSSource = {
     inputKindCaps: number;
     inputName: string;
     inputUuid: string;
+    groupName?: string;
+    groupUuid?: string;
+    sceneItemId?: number;
     unversionedInputKind: string;
     filters?: Array<OBSFilter>;
 };
@@ -65,3 +68,23 @@ type OBSTextSourceSettings = {
 type OBSColorSourceSettings = {
     color: number;
 };
+
+type OBSCanvasedSourceData = {
+    canvasName: string;
+    canvasUuid: string;
+    scenes: Array<{
+        sceneName: string;
+        sceneUuid: string;
+        sources: Array<OBSSource>;
+    }>;
+};
+
+type OBSSourceVisibilityData = {
+    sceneUuid: string;
+    sceneName: string;
+    sceneItemId: number;
+    sourceName: string;
+    groupName?: string;
+    groupUuid?: string;
+    action: boolean | "toggle";
+}

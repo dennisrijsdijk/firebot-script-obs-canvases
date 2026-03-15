@@ -78,6 +78,10 @@ class OBSRemote {
         });
 
         if (Object.keys(this._frontendCommunicatorEvents).length === 0) {
+            this._frontendCommunicatorEvents["getCanvasedSourceData"] = ipcFrontend.on("getCanvasedSourceData", async () => {
+                return this.getCanvasedSourceData();
+            });
+
             this._frontendCommunicatorEvents["getColorSources"] = ipcFrontend.on("getColorSources", async () => {
                 return this.getAllColorSources();
             });
@@ -160,8 +164,7 @@ class OBSRemote {
                 sceneItemsRequestBatch.push({
                     requestType: "GetSceneItemList",
                     requestData: {
-                        sceneName: scene.sceneName,
-                        canvasUuid: canvas.canvasUuid
+                        sceneUuid: scene.sceneUuid
                     }
                 });
             }
@@ -381,6 +384,175 @@ class OBSRemote {
             await this.obs.callBatch(filterToggleBatch, { executionType: RequestBatchExecutionType.Parallel, haltOnFailure: false });
         } catch (error) {
             globals.logger.error("Failed to toggle filters:", error);
+        }
+    }
+
+    async getCanvasedSourceData(): Promise<Array<OBSCanvasedSourceData> | null> {
+        if (!this.connected) {
+            return null;
+        }
+
+        const canvasedSourceData: Array<OBSCanvasedSourceData> = [];
+
+        const canvasedScenes = await this.getCanvasedSceneList();
+        if (canvasedScenes == null) {
+            return null;
+        }
+
+        const sceneItemsRequestBatch: RequestBatchRequest[] = [];
+
+        for (const canvas of canvasedScenes) {
+            const canvasData: OBSCanvasedSourceData = {
+                canvasName: canvas.canvasName,
+                canvasUuid: canvas.canvasUuid,
+                scenes: []
+            };
+            for (const scene of canvas.scenes) {
+                canvasData.scenes.push({
+                    sceneName: scene.sceneName,
+                    sceneUuid: scene.sceneUuid,
+                    sources: []
+                });
+                sceneItemsRequestBatch.push({
+                    requestType: "GetSceneItemList",
+                    requestId: scene.sceneUuid,
+                    requestData: {
+                        sceneUuid: scene.sceneUuid
+                    }
+                });
+            }
+            canvasedSourceData.push(canvasData);
+        }
+
+        try {
+            const response = await this.obs.callBatch(sceneItemsRequestBatch, { executionType: RequestBatchExecutionType.SerialRealtime, haltOnFailure: false });
+            for (const res of response) {
+                if (res.requestStatus.result === false) {
+                    globals.logger.warn(`Failed to get scene items for scene ${res.requestId}:`, res.requestStatus.code, res.requestStatus.comment);
+                    continue;
+                }
+
+                // typeguard
+                if (res.requestType !== "GetSceneItemList") {
+                    globals.logger.warn(`Unexpected response type for scene items request batch: ${res.requestType}`);
+                    continue;
+                }
+
+                for (const item of res.responseData.sceneItems as Array<OBSSceneItem>) {
+                    const canvas = canvasedSourceData.find(c => c.scenes.find(s => s.sceneUuid === res.requestId));
+                    const scene = canvas?.scenes.find(s => s.sceneUuid === res.requestId);
+                    if (!scene) {
+                        continue;
+                    }
+
+                    const source: OBSSource = {
+                        inputKind: item.isGroup ? "group" : item.sourceType,
+                        inputKindCaps: 0,
+                        inputName: item.sourceName,
+                        inputUuid: item.sourceUuid,
+                        sceneItemId: item.sceneItemId,
+                        unversionedInputKind: item.isGroup ? "group" : item.sourceType
+                    }
+                    scene.sources.push(source);
+
+                    if (item.isGroup) {
+                        const groupSceneItemsResponse = await this.obs.call("GetGroupSceneItemList", { sceneUuid: item.sourceUuid });
+                        if (groupSceneItemsResponse?.sceneItems) {
+                            for (const groupSceneItem of groupSceneItemsResponse.sceneItems as Array<OBSSceneItem>) {
+                                const groupSource: OBSSource = {
+                                    inputKind: groupSceneItem.isGroup ? "group" : groupSceneItem.sourceType,
+                                    inputKindCaps: 0,
+                                    inputName: groupSceneItem.sourceName,
+                                    inputUuid: groupSceneItem.sourceUuid,
+                                    groupName: item.sourceName,
+                                    groupUuid: item.sourceUuid,
+                                    sceneItemId: groupSceneItem.sceneItemId,
+                                    unversionedInputKind: groupSceneItem.isGroup ? "group" : groupSceneItem.sourceType
+                                }
+                                scene.sources.push(groupSource);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return canvasedSourceData;
+        } catch (error) {
+            globals.logger.error("Failed to get groups:", error);
+            return null;
+        }
+    }
+
+    async batchGetNewSourceVisibilities(sources: Array<OBSSourceVisibilityData>): Promise<Array<{ sceneUuid: string; sceneItemId: number; visible: boolean }> | null> {
+        if (!this.connected) {
+            return null;
+        }
+
+        const sanitizedSources = sources.map(source => ({
+            sceneUuid: source.groupUuid || source.sceneUuid,
+            sceneItemId: source.sceneItemId,
+            visible: source.action
+        }));
+
+        const toggleSources = sanitizedSources.filter(s => s.visible === "toggle");
+
+        const visibilityRequestBatch: RequestBatchRequest[] = toggleSources.map((source, index) => ({
+            requestType: "GetSceneItemEnabled",
+            requestId: `${index}`,
+            requestData: {
+                sceneUuid: source.sceneUuid,
+                sceneItemId: source.sceneItemId
+            }
+        }));
+
+        try {
+            const response = await this.obs.callBatch(visibilityRequestBatch, { executionType: RequestBatchExecutionType.SerialRealtime, haltOnFailure: false });
+            for (const res of response) {
+                if (res.requestStatus.result === false) {
+                    globals.logger.warn(`Failed to get visibility for scene item ${res.requestId}:`, res.requestStatus.code, res.requestStatus.comment);
+                    continue;
+                }
+
+                // typeguard
+                if (res.requestType !== "GetSceneItemEnabled") {
+                    globals.logger.warn(`Unexpected response type for visibility request batch: ${res.requestType}`);
+                    continue;
+                }
+
+                const source = toggleSources[parseInt(res.requestId)];
+                if (!source) {
+                    globals.logger.warn(`Could not find source for visibility response with requestId ${res.requestId}`);
+                    continue;
+                }
+
+                source.visible = !res.responseData.sceneItemEnabled;
+            }
+        } catch (error) {
+            globals.logger.error("Failed to get source visibilities:", error);
+            return null;
+        }
+
+        return sanitizedSources as Array<{ sceneUuid: string; sceneItemId: number; visible: boolean }>;
+    }
+
+    async batchSetSourceVisibilities(sources: Array<{ sceneUuid: string; sceneItemId: number; visible: boolean }>): Promise<void> {
+        if (!this.connected) {
+            return;
+        }
+
+        const visibilityToggleBatch: RequestBatchRequest[] = sources.map(source => ({
+            requestType: "SetSceneItemEnabled",
+            requestData: {
+                sceneUuid: source.sceneUuid,
+                sceneItemId: source.sceneItemId,
+                sceneItemEnabled: source.visible
+            }
+        }));
+
+        try {
+            await this.obs.callBatch(visibilityToggleBatch, { executionType: RequestBatchExecutionType.Parallel, haltOnFailure: false });
+        } catch (error) {
+            globals.logger.error("Failed to set source visibilities:", error);
         }
     }
 }
